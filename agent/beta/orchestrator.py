@@ -147,7 +147,11 @@ def _parse_executor_confirmation(
         try:
             confirmation = ExecutorConfirmation.model_validate(payload)
         except ValidationError as exc:
-            return "failed", f"executor returned invalid structured confirmation: {exc.errors()[0]['msg']}"
+            error = exc.errors()[0]
+            field = ".".join(str(part) for part in error["loc"])
+            return "failed", (
+                f"executor returned invalid structured confirmation: {field}: {error['msg']}"
+            )
         if confirmation.operation_fingerprint != expected_operation_fingerprint:
             return "failed", "executor confirmation does not match the approved operation"
         status = confirmation.status.strip().lower()
